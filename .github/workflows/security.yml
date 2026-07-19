@@ -61,7 +61,8 @@ jobs:
         with:
           working_directory: '.'
           format: 'json'
-          out: 'reports/tfsec-results.json'
+          soft_fail: true
+          additional_args: '--out reports/tfsec-results.json'
         continue-on-error: true
 
       - name: Run tfsec (SARIF Report)
@@ -69,7 +70,8 @@ jobs:
         with:
           working_directory: '.'
           format: 'sarif'
-          out: 'reports/tfsec-results.sarif'
+          soft_fail: true
+          additional_args: '--out reports/tfsec-results.sarif'
         continue-on-error: true
 
       - name: Upload tfsec Partial Artifact
