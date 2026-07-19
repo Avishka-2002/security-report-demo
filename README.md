@@ -7,22 +7,28 @@ A lightweight demo repository showcasing automated security reports using **Triv
 ## 🎯 Project Overview (The 6-Step Blueprint)
 
 ### 01. Create a New Repo
+
 Fresh repository (`security-report-demo`) containing a sample application (`app.py`), container configuration (`Dockerfile`), and sample Terraform IaC (`main.tf`).
 
 ### 02. Add Workflow File
+
 Defined at `.github/workflows/security.yml` with `on: [push]` trigger.
 
 ### 03. Setup Security Scan Jobs
+
 - **`trivy-scan`**: Uses `aquasecurity/trivy-action` to scan filesystem & container configuration, writing JSON/SARIF output to `reports/trivy-report.json` and `reports/trivy-report.sarif`.
 - **`tfsec-scan`**: Uses `aquasecurity/tfsec-action` to scan `main.tf` (Terraform IaC configuration), writing JSON/SARIF output to `reports/tfsec-report.json` and `reports/tfsec-report.sarif`.
 
 ### 04. Upload Artifact (Key Step)
+
 Collects all generated files in the `reports/` directory and uploads them as a single downloadable workflow artifact named **`security-report`** using `actions/upload-artifact`.
 
 ### 05. Test the Pipeline
+
 Push to your `main` branch, go to the **Actions** tab on GitHub, select the run, and download `security-report.zip`.
 
 ### 06. Review & Extend
+
 Open the downloaded JSON/SARIF reports to review findings, integrate with GitHub Advanced Security (Code Scanning tab), or extend with OPA/Gatekeeper for policy checks.
 
 ---
@@ -43,3 +49,6 @@ Open the downloaded JSON/SARIF reports to review findings, integrate with GitHub
 3. **Download Reports:**
    - Go to your repo -> **Actions** -> click on the workflow run.
    - Scroll down to **Artifacts** -> click **`security-report`** to download the ZIP file.
+     .
+
+# To scan and upload reports locally, use the following commands:
