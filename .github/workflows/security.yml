@@ -90,17 +90,12 @@ jobs:
       - name: Create Consolidated Reports Directory
         run: mkdir -p reports
 
-      - name: Download Trivy Reports
+      - name: Download All Scan Reports
         uses: actions/download-artifact@v4
         with:
-          name: trivy-reports
+          pattern: *-reports
           path: reports/
-
-      - name: Download tfsec Reports
-        uses: actions/download-artifact@v4
-        with:
-          name: tfsec-reports
-          path: reports/
+          merge-multiple: true
 
       - name: Key Step — Upload Consolidated Security Report Artifact
         uses: actions/upload-artifact@v4
