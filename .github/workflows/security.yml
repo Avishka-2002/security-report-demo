@@ -1,0 +1,125 @@
+name: Security CI/CD Pipeline
+
+on: [push]
+
+jobs:
+  # ------------------------------------------------------------------
+  # Job 1: Trivy Scan (Filesystem & Container Scan)
+  # ------------------------------------------------------------------
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Reports Directory
+        run: mkdir -p reports
+
+      - name: Run Trivy FS Scan (JSON Report)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'json'
+          output: 'reports/trivy-results.json'
+          severity: 'HIGH,CRITICAL'
+        continue-on-error: true
+
+      - name: Run Trivy FS Scan (SARIF Report)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'reports/trivy-results.sarif'
+          severity: 'HIGH,CRITICAL'
+        continue-on-error: true
+
+      - name: Upload Trivy Partial Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: reports/
+          retention-days: 14
+
+  # ------------------------------------------------------------------
+  # Job 2: tfsec Scan (Terraform / IaC Scan)
+  # ------------------------------------------------------------------
+  tfsec-scan:
+    name: tfsec IaC Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Reports Directory
+        run: mkdir -p reports
+
+      - name: Run tfsec (JSON Report)
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: '.'
+          format: 'json'
+          out: 'reports/tfsec-results.json'
+        continue-on-error: true
+
+      - name: Run tfsec (SARIF Report)
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: '.'
+          format: 'sarif'
+          out: 'reports/tfsec-results.sarif'
+        continue-on-error: true
+
+      - name: Upload tfsec Partial Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfsec-reports
+          path: reports/
+          retention-days: 14
+
+  # ------------------------------------------------------------------
+  # Job 3: Key Step — Upload Consolidated Security Report Artifact
+  # ------------------------------------------------------------------
+  upload-artifact:
+    name: Upload Consolidated Security Report
+    needs: [trivy-scan, tfsec-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Consolidated Reports Directory
+        run: mkdir -p reports
+
+      - name: Download Trivy Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: trivy-reports
+          path: reports/
+
+      - name: Download tfsec Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: tfsec-reports
+          path: reports/
+
+      - name: Key Step — Upload Consolidated Security Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: reports/
+          retention-days: 30
+
+      # Optional: Upload SARIF directly to GitHub Security Tab (Code Scanning)
+      - name: Upload Trivy SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/trivy-results.sarif
+          category: trivy
+        continue-on-error: true
+
+      - name: Upload tfsec SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/tfsec-results.sarif
+          category: tfsec
+        continue-on-error: true
